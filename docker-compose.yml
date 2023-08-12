@@ -1,0 +1,42 @@
+---
+version: '3.7'
+
+services:
+  keycloak:
+    image: quay.io/keycloak/keycloak
+    healthcheck:
+      test: ["CMD", "bash", "-c", "cat </dev/null >/dev/tcp/localhost/8080"]
+      interval: 5s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    command:
+      - start-dev
+    environment:
+      - KEYCLOAK_ADMIN=root
+      - KEYCLOAK_ADMIN_PASSWORD=root
+    ports:
+      - 8080:8080
+    networks:
+      - keycloak
+
+  vault:
+    image: hashicorp/vault
+    healthcheck:
+      test: ["CMD", "nc", "-z", "-w2", "localhost", "8200"]
+      interval: 5s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    environment:
+      - VAULT_DEV_ROOT_TOKEN_ID=root
+      - VAULT_DEV_LISTEN_ADDRESS=0.0.0.0:8200
+    ports:
+      - 8200:8200
+    cap_add:
+      - IPC_LOCK
+    networks:
+      - keycloak
+
+networks:
+  keycloak:
